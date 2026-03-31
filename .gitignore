@@ -24,6 +24,5 @@ Thumbs.db
 # Docker
 pgdata/
 
-# Alembic
-backend/alembic/versions/*.py
-!backend/alembic/versions/.gitkeep
+# Package lock (regenerated on install)
+frontend/package-lock.json
