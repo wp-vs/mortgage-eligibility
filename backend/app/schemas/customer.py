@@ -2,7 +2,13 @@ from datetime import datetime
 
 from pydantic import BaseModel
 
-from app.models.customer import CustomerStatus, EmploymentType, MortgageType, PropertyType
+from app.models.customer import (
+    CreditProfile,
+    CustomerStatus,
+    EmploymentType,
+    MortgageType,
+    PropertyType,
+)
 
 
 class CustomerProfileUpdate(BaseModel):
@@ -18,6 +24,8 @@ class CustomerProfileUpdate(BaseModel):
     mortgage_term_years: int | None = None
     first_time_buyer: bool | None = None
     property_location: str | None = None
+    credit_profile: CreditProfile | None = None
+    property_subtype: str | None = None
 
 
 class CustomerResponse(BaseModel):
@@ -34,6 +42,8 @@ class CustomerResponse(BaseModel):
     mortgage_term_years: int | None
     first_time_buyer: bool | None
     property_location: str | None
+    credit_profile: CreditProfile | None
+    property_subtype: str | None
     status: CustomerStatus
     created_at: datetime
 

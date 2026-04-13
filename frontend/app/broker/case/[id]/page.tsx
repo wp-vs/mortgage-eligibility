@@ -5,7 +5,18 @@ import { useParams } from "next/navigation";
 import ProductCard from "@/components/ProductCard";
 import IncomeAnalysis from "@/components/IncomeAnalysis";
 import ExpenseFlags from "@/components/ExpenseFlags";
+import AffordabilityBreakdown from "@/components/AffordabilityBreakdown";
 import { getBrokerCaseDetail, reviewRecommendation } from "@/lib/api";
+
+const COMPLEXITY_LABELS: Record<string, string> = {
+  non_standard_employment: "non-standard employment",
+  adverse_credit: "adverse credit history",
+  high_ltv: "high loan-to-value",
+  non_standard_property: "non-standard property",
+  irregular_income: "irregular income",
+  critical_expenses: "critical expense flags",
+  interest_only_repayment: "interest-only repayment",
+};
 
 export default function BrokerCasePage() {
   const params = useParams();
@@ -58,6 +69,8 @@ export default function BrokerCasePage() {
   }
 
   const { customer, banking_analysis, recommendations } = caseData;
+  const complexityReasons: string[] = recommendations?.[0]?.complexity_reasons || [];
+  const topRec = recommendations?.[0];
 
   return (
     <div className="max-w-6xl mx-auto px-6 py-8">
@@ -72,6 +85,24 @@ export default function BrokerCasePage() {
           Case: {customer?.full_name || `Customer #${customerId}`}
         </h1>
       </div>
+
+      {complexityReasons.length > 0 && (
+        <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+          <div className="font-semibold text-amber-900 mb-1">
+            Complexity flags — human review required
+          </div>
+          <p className="text-sm text-amber-800">
+            This case does not match the automated "standard" profile because
+            of:{" "}
+            <span className="font-medium">
+              {complexityReasons
+                .map((r) => COMPLEXITY_LABELS[r] || r)
+                .join(", ")}
+            </span>
+            .
+          </p>
+        </div>
+      )}
 
       {/* Customer Profile */}
       <div className="card mb-6">
@@ -131,6 +162,18 @@ export default function BrokerCasePage() {
                   : "N/A"}
             </div>
           </div>
+          <div>
+            <span className="text-gray-500">Credit Profile</span>
+            <div className="font-medium capitalize">
+              {customer?.credit_profile?.replace("_", " ") || "unknown"}
+            </div>
+          </div>
+          {customer?.property_subtype && (
+            <div>
+              <span className="text-gray-500">Property Subtype</span>
+              <div className="font-medium">{customer.property_subtype}</div>
+            </div>
+          )}
         </div>
       </div>
 
@@ -144,6 +187,7 @@ export default function BrokerCasePage() {
           {recommendations?.map((rec: any) => (
             <div key={rec.id}>
               <ProductCard
+                recommendationId={rec.id}
                 rank={rec.rank}
                 lenderName={rec.product?.lender_name || "Unknown"}
                 productName={rec.product?.product_name || ""}
@@ -153,6 +197,11 @@ export default function BrokerCasePage() {
                 maxLtv={rec.product?.max_ltv || 0}
                 arrangementFee={rec.product?.arrangement_fee || 0}
                 estimatedMonthlyPayment={rec.product?.estimated_monthly_payment}
+                totalCostInitial={rec.total_cost_initial}
+                effectiveRate={rec.effective_rate}
+                bindingConstraint={rec.binding_affordability_constraint}
+                stressRateUsed={rec.stress_rate_used}
+                requiresBrokerReview={rec.requires_broker_review}
                 matchScore={Number(rec.match_score)}
                 matchReasons={rec.match_reasons}
                 unmetCriteria={rec.unmet_criteria}
@@ -210,8 +259,15 @@ export default function BrokerCasePage() {
           ))}
         </div>
 
-        {/* Right: Banking analysis */}
+        {/* Right: Affordability + Banking analysis */}
         <div className="space-y-6">
+          {topRec && (
+            <AffordabilityBreakdown
+              maxLoan={topRec.affordability_max_loan}
+              bindingConstraint={topRec.binding_affordability_constraint}
+              stressRate={topRec.stress_rate_used}
+            />
+          )}
           {banking_analysis ? (
             <>
               <IncomeAnalysis

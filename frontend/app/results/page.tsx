@@ -4,11 +4,22 @@ import { useEffect, useState } from "react";
 import ProductCard from "@/components/ProductCard";
 import IncomeAnalysis from "@/components/IncomeAnalysis";
 import ExpenseFlags from "@/components/ExpenseFlags";
+import AffordabilityBreakdown from "@/components/AffordabilityBreakdown";
 import {
   getRecommendations,
   getBankingAnalysis,
   getCustomer,
 } from "@/lib/api";
+
+const COMPLEXITY_LABELS: Record<string, string> = {
+  non_standard_employment: "non-standard employment",
+  adverse_credit: "adverse credit history",
+  high_ltv: "high loan-to-value",
+  non_standard_property: "non-standard property",
+  irregular_income: "irregular income",
+  critical_expenses: "critical expense flags",
+  interest_only_repayment: "interest-only repayment",
+};
 
 export default function ResultsPage() {
   const [loading, setLoading] = useState(true);
@@ -53,6 +64,15 @@ export default function ResultsPage() {
     );
   }
 
+  // Complexity reasons are attached to each recommendation at match-time.
+  // They're customer-wide, so the first recommendation is representative.
+  const complexityReasons: string[] =
+    recommendations[0]?.complexity_reasons || [];
+  const requiresBrokerReview =
+    recommendations.some((r) => r.requires_broker_review) ||
+    complexityReasons.length > 0;
+  const topRec = recommendations[0];
+
   return (
     <div className="max-w-5xl mx-auto px-6 py-8">
       <div className="mb-8">
@@ -62,6 +82,37 @@ export default function ResultsPage() {
           will review these before any formal recommendation.
         </p>
       </div>
+
+      {/* Routing banner */}
+      {recommendations.length > 0 &&
+        (requiresBrokerReview ? (
+          <div className="mb-6 p-4 bg-amber-50 border border-amber-200 rounded-lg">
+            <div className="font-semibold text-amber-900 mb-1">
+              Broker review required
+            </div>
+            <p className="text-sm text-amber-800">
+              Your case requires assessment by a qualified broker before
+              these recommendations can be finalised because of:{" "}
+              <span className="font-medium">
+                {complexityReasons
+                  .map((r) => COMPLEXITY_LABELS[r] || r)
+                  .join(", ")}
+              </span>
+              .
+            </p>
+          </div>
+        ) : (
+          <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="font-semibold text-green-900 mb-1">
+              Your case qualifies for automated recommendation
+            </div>
+            <p className="text-sm text-green-800">
+              Your profile matches the standard case criteria. A broker will
+              countersign the recommendation, but no additional underwriting
+              is required.
+            </p>
+          </div>
+        ))}
 
       {/* Customer summary */}
       {customer && (
@@ -119,6 +170,7 @@ export default function ResultsPage() {
             recommendations.map((rec: any) => (
               <ProductCard
                 key={rec.id}
+                recommendationId={rec.id}
                 rank={rec.rank}
                 lenderName={rec.product?.lender_name || "Unknown"}
                 productName={rec.product?.product_name || rec.product_id}
@@ -128,6 +180,11 @@ export default function ResultsPage() {
                 maxLtv={rec.product?.max_ltv || 0}
                 arrangementFee={rec.product?.arrangement_fee || 0}
                 estimatedMonthlyPayment={rec.product?.estimated_monthly_payment}
+                totalCostInitial={rec.total_cost_initial}
+                effectiveRate={rec.effective_rate}
+                bindingConstraint={rec.binding_affordability_constraint}
+                stressRateUsed={rec.stress_rate_used}
+                requiresBrokerReview={rec.requires_broker_review}
                 matchScore={Number(rec.match_score)}
                 matchReasons={rec.match_reasons}
                 unmetCriteria={rec.unmet_criteria}
@@ -138,8 +195,15 @@ export default function ResultsPage() {
           )}
         </div>
 
-        {/* Right: Banking analysis */}
+        {/* Right: Banking analysis + affordability */}
         <div className="space-y-6">
+          {topRec && (
+            <AffordabilityBreakdown
+              maxLoan={topRec.affordability_max_loan}
+              bindingConstraint={topRec.binding_affordability_constraint}
+              stressRate={topRec.stress_rate_used}
+            />
+          )}
           {bankingAnalysis && (
             <>
               <IncomeAnalysis

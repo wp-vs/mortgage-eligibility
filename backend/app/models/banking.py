@@ -1,8 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, Numeric, String, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, Numeric, String, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -64,7 +63,7 @@ class BankingAnalysis(Base):
     salary_variation_pct: Mapped[float | None] = mapped_column(Numeric(5, 2), nullable=True)
 
     # Expense analysis
-    flagged_expenses: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    flagged_expenses: Mapped[list | None] = mapped_column(JSON, nullable=True)
     estimated_monthly_rent: Mapped[float | None] = mapped_column(
         Numeric(10, 2), nullable=True
     )

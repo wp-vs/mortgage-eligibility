@@ -1,7 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy import JSON, Boolean, DateTime, ForeignKey, Integer, Numeric, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -16,8 +15,32 @@ class Recommendation(Base):
     rank: Mapped[int] = mapped_column(Integer, nullable=False)
 
     match_score: Mapped[float] = mapped_column(Numeric(5, 2), nullable=False)
-    match_reasons: Mapped[list | None] = mapped_column(JSONB, nullable=True)
-    unmet_criteria: Mapped[list | None] = mapped_column(JSONB, nullable=True)
+    match_reasons: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    unmet_criteria: Mapped[list | None] = mapped_column(JSON, nullable=True)
+
+    # Advisor-grade sourcing fields
+    total_cost_initial: Mapped[float | None] = mapped_column(
+        Numeric(12, 2), nullable=True
+    )
+    effective_rate: Mapped[float | None] = mapped_column(Numeric(5, 3), nullable=True)
+    amortised_fee_pct: Mapped[float | None] = mapped_column(
+        Numeric(5, 3), nullable=True
+    )
+
+    # Affordability snapshot (what the advisor would file)
+    affordability_max_loan: Mapped[float | None] = mapped_column(
+        Numeric(12, 2), nullable=True
+    )
+    binding_affordability_constraint: Mapped[str | None] = mapped_column(
+        String(50), nullable=True
+    )
+    stress_rate_used: Mapped[float | None] = mapped_column(
+        Numeric(5, 2), nullable=True
+    )
+
+    # Routing
+    complexity_reasons: Mapped[list | None] = mapped_column(JSON, nullable=True)
+    requires_broker_review: Mapped[bool] = mapped_column(Boolean, default=False)
 
     customer_summary_text: Mapped[str | None] = mapped_column(Text, nullable=True)
     broker_summary_text: Mapped[str | None] = mapped_column(Text, nullable=True)

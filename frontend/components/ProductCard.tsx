@@ -1,4 +1,5 @@
 interface ProductCardProps {
+  recommendationId?: number;
   rank: number;
   lenderName: string;
   productName: string;
@@ -8,14 +9,21 @@ interface ProductCardProps {
   maxLtv: number;
   arrangementFee: number;
   estimatedMonthlyPayment?: number;
+  totalCostInitial?: number | null;
+  effectiveRate?: number | null;
   matchScore: number;
   matchReasons?: string[];
   unmetCriteria?: string[];
+  bindingConstraint?: string | null;
+  stressRateUsed?: number | null;
+  requiresBrokerReview?: boolean;
   brokerApproved?: boolean | null;
   brokerNotes?: string | null;
+  apiBaseUrl?: string;
 }
 
 export default function ProductCard({
+  recommendationId,
   rank,
   lenderName,
   productName,
@@ -25,17 +33,34 @@ export default function ProductCard({
   maxLtv,
   arrangementFee,
   estimatedMonthlyPayment,
+  totalCostInitial,
+  effectiveRate,
   matchScore,
   matchReasons,
   unmetCriteria,
+  bindingConstraint,
+  stressRateUsed,
+  requiresBrokerReview,
   brokerApproved,
   brokerNotes,
+  apiBaseUrl,
 }: ProductCardProps) {
   const rankColors: Record<number, string> = {
     1: "border-yellow-400 bg-yellow-50",
     2: "border-gray-300 bg-gray-50",
     3: "border-orange-300 bg-orange-50",
   };
+
+  const constraintLabel: Record<string, string> = {
+    income_multiple: "income multiple",
+    stress: "stress rate",
+    cashflow: "cashflow after expenses",
+  };
+
+  const pdfUrl =
+    recommendationId && (apiBaseUrl || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000")
+      ? `${apiBaseUrl || process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000"}/api/products/recommendations/${recommendationId}/suitability-letter.pdf`
+      : null;
 
   return (
     <div
@@ -80,6 +105,42 @@ export default function ProductCard({
           </div>
         </div>
 
+        {(totalCostInitial != null || effectiveRate != null) && (
+          <div className="mb-4 bg-blue-50 border border-blue-100 rounded-lg p-3">
+            <div className="text-xs uppercase tracking-wide text-blue-700 font-semibold">
+              Sourcing metrics
+            </div>
+            <div className="mt-1 grid grid-cols-2 gap-3 text-sm">
+              <div>
+                <div className="text-xs text-gray-500">Total cost (initial)</div>
+                <div className="font-semibold">
+                  {totalCostInitial != null
+                    ? `£${Math.round(totalCostInitial).toLocaleString()}`
+                    : "—"}
+                </div>
+              </div>
+              <div>
+                <div className="text-xs text-gray-500">Effective rate</div>
+                <div className="font-semibold">
+                  {effectiveRate != null ? `${effectiveRate.toFixed(2)}%` : "—"}
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {bindingConstraint && (
+          <div className="mb-3 text-xs text-gray-600">
+            Affordability bound by{" "}
+            <span className="font-medium">
+              {constraintLabel[bindingConstraint] || bindingConstraint}
+            </span>
+            {stressRateUsed != null && bindingConstraint === "stress" && (
+              <> &middot; stress rate {stressRateUsed.toFixed(2)}%</>
+            )}
+          </div>
+        )}
+
         {matchReasons && matchReasons.length > 0 && (
           <div className="mb-3">
             <div className="text-xs font-medium text-green-700 mb-1">
@@ -110,6 +171,12 @@ export default function ProductCard({
           </div>
         )}
 
+        {requiresBrokerReview && (
+          <div className="mt-3 p-3 rounded-lg text-xs bg-amber-50 text-amber-900 border border-amber-200">
+            This recommendation requires broker review before it becomes final.
+          </div>
+        )}
+
         {brokerApproved !== null && brokerApproved !== undefined && (
           <div
             className={`mt-3 p-3 rounded-lg text-sm ${brokerApproved ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"}`}
@@ -132,6 +199,19 @@ export default function ProductCard({
             {matchScore.toFixed(0)}% match
           </span>
         </div>
+
+        {pdfUrl && (
+          <div className="mt-3">
+            <a
+              href={pdfUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1 text-xs font-medium text-primary-600 hover:text-primary-700 hover:underline"
+            >
+              Download suitability letter (PDF) →
+            </a>
+          </div>
+        )}
       </div>
     </div>
   );

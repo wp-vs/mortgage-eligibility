@@ -1,8 +1,7 @@
 import enum
 from datetime import datetime
 
-from sqlalchemy import DateTime, Enum, ForeignKey, Integer, String, Text, func
-from sqlalchemy.dialects.postgresql import ARRAY
+from sqlalchemy import JSON, DateTime, Enum, ForeignKey, Integer, String, Text, func
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.database import Base
@@ -35,7 +34,7 @@ class EligibilityCriteria(Base):
         Enum(CriteriaGrade), nullable=True
     )
     details_text: Mapped[str | None] = mapped_column(Text, nullable=True)
-    tags: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+    tags: Mapped[list[str] | None] = mapped_column(JSON, nullable=True)
     lending_type: Mapped[LendingType] = mapped_column(
         Enum(LendingType), default=LendingType.residential
     )

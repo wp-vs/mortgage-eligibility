@@ -31,9 +31,14 @@ YOUR ROLE:
    - Their name and contact details
    - Employment type and annual income
    - Property type, estimated value, and location
+   - Any unusual property features (ex-local authority, high-rise flat, concrete construction)
    - Deposit amount (for purchases) or current equity (for remortgages)
    - Desired mortgage term
    - Whether they are a first-time buyer
+   - Credit history: ask a direct question about CCJs, defaults, bankruptcies, \
+     IVAs or missed payments in the last 6 years. Record as clean / minor_adverse / \
+     major_adverse. This is essential for matching — reassure the customer that \
+     being upfront gives them a better product match.
 3. When you have enough financial information, suggest connecting their bank account \
 via Open Banking so the system can verify income and review expenses
 4. Once banking data is available, review the analysis with them
@@ -114,6 +119,28 @@ TOOLS = [
                     "type": "string",
                     "description": "Property location (city/region)",
                 },
+                "credit_profile": {
+                    "type": "string",
+                    "enum": ["clean", "minor_adverse", "major_adverse", "unknown"],
+                    "description": (
+                        "Customer's self-reported credit status. Use 'clean' "
+                        "if they confirm no CCJs, defaults, bankruptcies or "
+                        "missed payments in the last 6 years. Use "
+                        "'minor_adverse' for small defaults or historic "
+                        "missed payments. Use 'major_adverse' for CCJs, "
+                        "bankruptcies, IVAs or repossessions. Default to "
+                        "'unknown' until you have explicitly asked."
+                    ),
+                },
+                "property_subtype": {
+                    "type": "string",
+                    "description": (
+                        "Free-text subtype if the property has unusual "
+                        "features (e.g. 'ex-local authority flat', "
+                        "'concrete construction', 'high-rise flat', "
+                        "'leasehold flat')."
+                    ),
+                },
             },
         },
     },
@@ -179,6 +206,10 @@ class MortgageAgent:
             parts.append(f"Type: {c.mortgage_type.value}")
         if c.first_time_buyer is not None:
             parts.append(f"First-time buyer: {'Yes' if c.first_time_buyer else 'No'}")
+        if c.credit_profile:
+            parts.append(f"Credit profile: {c.credit_profile.value}")
+        if c.property_subtype:
+            parts.append(f"Property subtype: {c.property_subtype}")
         return "\n".join(parts)
 
     async def _handle_tool_call(self, tool_name: str, tool_input: dict) -> dict:

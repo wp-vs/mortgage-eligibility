@@ -5,9 +5,10 @@ class Settings(BaseSettings):
     app_name: str = "Mortgage Eligibility Platform"
     debug: bool = True
 
-    # Database
-    database_url: str = "postgresql+asyncpg://postgres:postgres@localhost:5432/mortgage_db"
-    database_url_sync: str = "postgresql://postgres:postgres@localhost:5432/mortgage_db"
+    # Database — defaults to SQLite for zero-install local dev.
+    # Override via DATABASE_URL env var to point at Postgres in production.
+    database_url: str = "sqlite+aiosqlite:///./mortgage.db"
+    database_url_sync: str = "sqlite:///./mortgage.db"
 
     # Anthropic
     anthropic_api_key: str = ""

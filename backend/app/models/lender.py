@@ -22,3 +22,6 @@ class Lender(Base):
     # Relationships
     products: Mapped[list["Product"]] = relationship(back_populates="lender")
     criteria: Mapped[list["EligibilityCriteria"]] = relationship(back_populates="lender")
+    affordability: Mapped["LenderAffordability | None"] = relationship(
+        back_populates="lender", uselist=False
+    )

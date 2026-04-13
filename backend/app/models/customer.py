@@ -38,6 +38,13 @@ class CustomerStatus(str, enum.Enum):
     declined = "declined"
 
 
+class CreditProfile(str, enum.Enum):
+    clean = "clean"
+    minor_adverse = "minor_adverse"
+    major_adverse = "major_adverse"
+    unknown = "unknown"
+
+
 class Customer(Base):
     __tablename__ = "customers"
 
@@ -62,6 +69,12 @@ class Customer(Base):
     mortgage_term_years: Mapped[int | None] = mapped_column(Integer, nullable=True)
     first_time_buyer: Mapped[bool | None] = mapped_column(Boolean, nullable=True)
     property_location: Mapped[str | None] = mapped_column(String(255), nullable=True)
+
+    # Credit & property detail (advisor-grade)
+    credit_profile: Mapped[CreditProfile] = mapped_column(
+        Enum(CreditProfile), default=CreditProfile.unknown, nullable=False
+    )
+    property_subtype: Mapped[str | None] = mapped_column(String(100), nullable=True)
 
     # Status
     status: Mapped[CustomerStatus] = mapped_column(

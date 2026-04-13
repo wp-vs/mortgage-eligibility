@@ -24,5 +24,10 @@ Thumbs.db
 # Docker
 pgdata/
 
+# SQLite local dev database
+*.db
+*.db-journal
+backend/mortgage.db
+
 # Package lock (regenerated on install)
 frontend/package-lock.json
