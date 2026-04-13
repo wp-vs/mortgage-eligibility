@@ -12,6 +12,7 @@ backend/.env
 frontend/.next/
 dist/
 *.egg-info/
+*.tsbuildinfo
 
 # IDE
 .vscode/
